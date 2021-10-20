@@ -1,15 +1,25 @@
 mod vec3;
 mod ray;
+mod hittable;
+mod sphere;
 
+use std::rc::Rc;
 use std::io::{self, Stdout, Write};
 use vec3::{Point3, Color};
 use ray::Ray;
+use hittable::{Hittable, HittableList};
+use sphere::Sphere;
 
 fn main() {
     // Image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IAMGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IAMGE_WIDTH as f64 / ASPECT_RATIO) as usize;
+
+    // World
+    let mut world = HittableList::default();
+    world.add(Rc::new(Sphere::new(&Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Rc::new(Sphere::new(&Point3::new(0.0, -100.5, -1.0), 100.0)));
 
     // Camera
     const VIEWPORT_HEIGHT: f64 = 2.0;
@@ -36,7 +46,7 @@ fn main() {
             let v = j as f64 * HEIGHT_FACTOR;
             let ray = Ray::new(&origin, &(lower_left_corner + horizontal * u + vertical * v - origin));
 
-            write_color(&mut out, &ray_color(&ray)).unwrap();
+            write_color(&mut out, &ray_color(&ray, &world)).unwrap();
         }
     }
 }
@@ -48,27 +58,12 @@ fn write_color(out: &mut Stdout, color: &Color) -> io::Result<()> {
     out.write_fmt(format_args!("{} {} {}\n", r, g, b))
 }
 
-fn ray_color(ray: &Ray) -> Color {
-    let sphere_center = Point3::new(0.0, 0.0, -1.0);
-    let sphere_radius = 0.5;
-    if let Some(t) = hit_sphere(ray, &sphere_center, sphere_radius) {
-        let normal = (ray.at(t) - sphere_center).unit_vector();
-        return (normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
+fn ray_color<T: Hittable>(ray: &Ray, hittable: &T) -> Color {
+    if let Some(r) = hittable.hit(ray, 0.0, std::f64::MAX) {
+        return (r.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
     }
+
     let dir = ray.dir().unit_vector();
     let t = (dir.y() + 1.0) * 0.5;
     Color::new(1.0, 1.0, 1.0) * (1.0 - t) + Color::new(0.5, 0.7, 1.0) * t
-}
-
-fn hit_sphere(ray: &Ray, center: &Point3, radius: f64) -> Option<f64> {
-    let oc = ray.origin() - *center;
-    let a = ray.dir().length_squared();
-    let half_b = oc.dot(ray.dir());
-    let c = oc.dot(oc) - radius * radius;
-    let discriminant = half_b * half_b - a * c;
-    if discriminant < 0.0 {
-        return None;
-    }
-
-    Some((-half_b - discriminant.sqrt()) / a)
 }
