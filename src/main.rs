@@ -58,9 +58,9 @@ fn main() {
 fn write_color(out: &mut Stdout, color: &Color, samplers_per_pixel: usize) -> io::Result<()> {
     let samplers_factor = 1.0 / (samplers_per_pixel as f64);
 
-    let r = (255.999 * clamp(color.x() * samplers_factor, 0.0, 1.0)) as u8;
-    let g = (255.999 * clamp(color.y() * samplers_factor, 0.0, 1.0)) as u8;
-    let b = (255.999 * clamp(color.z() * samplers_factor, 0.0, 1.0)) as u8;
+    let r = (255.999 * clamp((color.x() * samplers_factor).sqrt(), 0.0, 1.0)) as u8;
+    let g = (255.999 * clamp((color.y() * samplers_factor).sqrt(), 0.0, 1.0)) as u8;
+    let b = (255.999 * clamp((color.z() * samplers_factor).sqrt(), 0.0, 1.0)) as u8;
     out.write_fmt(format_args!("{} {} {}\n", r, g, b))
 }
 
