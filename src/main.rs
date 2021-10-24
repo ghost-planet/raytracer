@@ -7,7 +7,7 @@ mod camera;
 use rand::{self,Rng};
 use std::rc::Rc;
 use std::io::{self, Stdout, Write};
-use vec3::{Point3, Color};
+use vec3::{Point3, Color, Vec3};
 use ray::Ray;
 use hittable::{Hittable, HittableList};
 use sphere::Sphere;
@@ -19,6 +19,7 @@ fn main() {
     const IAMGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IAMGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     const SAMPLERS_PER_PIXEL: usize = 100;
+    const MAX_DEPTH: usize = 50;
 
     // World
     let mut world = HittableList::default();
@@ -47,7 +48,7 @@ fn main() {
                 let u = (i + rng.gen_range(0.0..1.0)) * WIDTH_FACTOR;
                 let v = (j + rng.gen_range(0.0..1.0)) * HEIGHT_FACTOR;
                 let ray = camera.gen_ray(u, v);
-                color += ray_color(&ray, &world);
+                color += ray_color(&ray, &world, MAX_DEPTH);
             }
             write_color(&mut out, &color, SAMPLERS_PER_PIXEL).unwrap();
         }
@@ -63,9 +64,14 @@ fn write_color(out: &mut Stdout, color: &Color, samplers_per_pixel: usize) -> io
     out.write_fmt(format_args!("{} {} {}\n", r, g, b))
 }
 
-fn ray_color<T: Hittable>(ray: &Ray, hittable: &T) -> Color {
+fn ray_color<T: Hittable>(ray: &Ray, hittable: &T, depth: usize) -> Color {
+    if depth == 0 {
+        return Color::default();
+    }
+
     if let Some(r) = hittable.hit(ray, 0.0, std::f64::MAX) {
-        return (r.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
+        let target = r.p + r.normal + random_in_unit_sphere();
+        return ray_color(&Ray::new(&r.p, &(target - r.p).unit_vector()), hittable, depth - 1) * 0.5;
     }
 
     let dir = ray.dir().unit_vector();
@@ -80,5 +86,14 @@ fn clamp(v: f64, min: f64, max: f64) -> f64 {
         max
     } else {
         v
+    }
+}
+
+fn random_in_unit_sphere() -> Vec3 {
+    loop {
+        let p = Vec3::random_in(-1.0, 1.0);
+        if p.length_squared() < 1.0 {
+            break p;
+        }
     }
 }

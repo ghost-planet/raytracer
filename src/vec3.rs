@@ -1,4 +1,5 @@
 use std::{ops, fmt};
+use rand::{self,Rng};
 
 #[derive(Copy, Clone, Default, Debug)]
 pub struct Vec3 {
@@ -14,6 +15,20 @@ impl Vec3 {
     #[inline]
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Self {v: [x, y, z]}
+    }
+
+    pub fn random() -> Self {
+        let mut rng = rand::thread_rng();
+        Self{
+            v: [rng.gen(), rng.gen(), rng.gen()]
+        }
+    }
+
+    pub fn random_in(min: f64, max: f64) -> Self {
+        let mut rng = rand::thread_rng();
+        Self{
+            v: [rng.gen_range(min..max), rng.gen_range(min..max), rng.gen_range(min..max)]
+        }
     }
 
     #[inline]
