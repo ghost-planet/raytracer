@@ -3,15 +3,17 @@ mod ray;
 mod hittable;
 mod sphere;
 mod camera;
+mod material;
 
 use rand::{self,Rng};
 use std::rc::Rc;
 use std::io::{self, Stdout, Write};
-use vec3::{Point3, Color, Vec3};
+use vec3::{Point3, Color};
 use ray::Ray;
 use hittable::{Hittable, HittableList};
 use sphere::Sphere;
 use camera::Camera;
+use material::Lambertian;
 
 fn main() {
     // Image
@@ -23,8 +25,9 @@ fn main() {
 
     // World
     let mut world = HittableList::default();
-    world.add(Rc::new(Sphere::new(&Point3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Rc::new(Sphere::new(&Point3::new(0.0, -100.5, -1.0), 100.0)));
+    let lambertian = Rc::new(Lambertian::new(&Color::new(0.5, 0.5, 0.5)));
+    world.add(Rc::new(Sphere::new(&Point3::new(0.0, 0.0, -1.0), 0.5, lambertian.clone())));
+    world.add(Rc::new(Sphere::new(&Point3::new(0.0, -100.5, -1.0), 100.0, lambertian.clone())));
 
     // Camera
     let camera = Camera::new(ASPECT_RATIO);
@@ -70,8 +73,11 @@ fn ray_color<T: Hittable>(ray: &Ray, hittable: &T, depth: usize) -> Color {
     }
 
     if let Some(r) = hittable.hit(ray, 0.0001, std::f64::MAX) {
-        let target = r.p + r.normal + random_unit_vector();
-        return ray_color(&Ray::new(&r.p, &(target - r.p).unit_vector()), hittable, depth - 1) * 0.5;
+        if let Some((attenuation, ray)) = r.material.scatter(ray, &r) {
+            return ray_color(&ray, hittable, depth - 1) * attenuation;
+        } else {
+            return Color::new(0.0, 0.0, 0.0);
+        }
     }
 
     let dir = ray.dir().unit_vector();
@@ -89,15 +95,3 @@ fn clamp(v: f64, min: f64, max: f64) -> f64 {
     }
 }
 
-fn random_in_unit_sphere() -> Vec3 {
-    loop {
-        let p = Vec3::random_in(-1.0, 1.0);
-        if p.length_squared() < 1.0 {
-            break p;
-        }
-    }
-}
-
-fn random_unit_vector() -> Vec3 {
-    random_in_unit_sphere().unit_vector()
-}

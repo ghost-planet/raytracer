@@ -74,6 +74,12 @@ impl Vec3 {
     pub fn unit_vector(&self) -> Self {
         *self / self.length_squared()
     }
+
+    #[inline]
+    pub fn near_zero(&self) -> bool {
+        const S: f64 = 1e-8;
+        self.v[0].abs() < S && self.v[1].abs() < S && self.v[2].abs() < S
+    }
 }
 
 impl ops::Add for Vec3 {
