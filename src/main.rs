@@ -13,7 +13,7 @@ use ray::Ray;
 use hittable::{Hittable, HittableList};
 use sphere::Sphere;
 use camera::Camera;
-use material::Lambertian;
+use material::{Lambertian, Metal};
 
 fn main() {
     // Image
@@ -25,9 +25,15 @@ fn main() {
 
     // World
     let mut world = HittableList::default();
-    let lambertian = Rc::new(Lambertian::new(&Color::new(0.5, 0.5, 0.5)));
-    world.add(Rc::new(Sphere::new(&Point3::new(0.0, 0.0, -1.0), 0.5, lambertian.clone())));
-    world.add(Rc::new(Sphere::new(&Point3::new(0.0, -100.5, -1.0), 100.0, lambertian.clone())));
+    let material_ground = Rc::new(Lambertian::new(&Color::new(0.8, 0.8, 0.0)));
+    let material_center = Rc::new(Lambertian::new(&Color::new(0.7, 0.3, 0.3)));
+    let material_left   = Rc::new(Metal::new(&Color::new(0.8, 0.8, 0.8)));
+    let material_right  = Rc::new(Metal::new(&Color::new(0.8, 0.6, 0.2)));
+
+    world.add(Rc::new(Sphere::new(&Point3::new( 0.0, -100.5, -1.0), 100.0, material_ground)));
+    world.add(Rc::new(Sphere::new(&Point3::new( 0.0,    0.0, -1.0),   0.5, material_center)));
+    world.add(Rc::new(Sphere::new(&Point3::new(-1.0,    0.0, -1.0),   0.5, material_left)));
+    world.add(Rc::new(Sphere::new(&Point3::new( 1.0,    0.0, -1.0),   0.5, material_right)));
 
     // Camera
     let camera = Camera::new(ASPECT_RATIO);

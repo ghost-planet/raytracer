@@ -30,6 +30,29 @@ impl Material for Lambertian {
     }
 }
 
+pub struct Metal {
+    albedo: Color,
+}
+
+impl Metal {
+    pub fn new(albedo: &Color) -> Self {
+        Self {
+            albedo: *albedo,
+        }
+    }
+}
+
+impl Material for Metal {
+    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
+        let reflected_direction = reflect(&ray.dir(), &rec.normal);
+        if reflected_direction.dot(rec.normal) > 0.0 {
+            Some((self.albedo, Ray::new(&rec.p, &reflected_direction)))
+        } else {
+            None
+        }
+    }
+}
+
 fn random_in_unit_sphere() -> Vec3 {
     loop {
         let p = Vec3::random_in(-1.0, 1.0);
@@ -41,4 +64,8 @@ fn random_in_unit_sphere() -> Vec3 {
 
 fn random_unit_vector() -> Vec3 {
     random_in_unit_sphere().unit_vector()
+}
+
+fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    *v - *n * (v.dot(*n) * 2.0)
 }
