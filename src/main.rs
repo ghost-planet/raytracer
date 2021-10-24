@@ -69,7 +69,7 @@ fn ray_color<T: Hittable>(ray: &Ray, hittable: &T, depth: usize) -> Color {
         return Color::default();
     }
 
-    if let Some(r) = hittable.hit(ray, 0.0, std::f64::MAX) {
+    if let Some(r) = hittable.hit(ray, 0.0001, std::f64::MAX) {
         let target = r.p + r.normal + random_in_unit_sphere();
         return ray_color(&Ray::new(&r.p, &(target - r.p).unit_vector()), hittable, depth - 1) * 0.5;
     }
