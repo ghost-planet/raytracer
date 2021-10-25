@@ -26,6 +26,6 @@ impl Camera {
     }
 
     pub fn gen_ray(&self, u: f64, v: f64) -> Ray {
-        Ray::new(&self.origin, &(self.lower_left_corner + self.horizontal * u + self.vertical * v - self.origin))
+        Ray::new(&self.origin, &(self.lower_left_corner + self.horizontal * u + self.vertical * v - self.origin).unit_vector())
     }
 }
