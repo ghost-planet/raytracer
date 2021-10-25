@@ -36,10 +36,15 @@ fn main() {
     world.add(Rc::new(Sphere::new(&Point3::new( 1.0,    0.0, -1.0),   0.5, material_right)));
 
     // Camera
-    let camera = Camera::new(&Point3::default(),
-                            &Point3::new(0.0, 0.0, -1.0),
-                            &Vec3::new(0.0, 1.0, 0.0),
-                            90.0, ASPECT_RATIO);
+    let look_from = Point3::new(3.0, 3.0, 2.0);
+    let look_at = Point3::new(0.0, 0.0, -1.0);
+    let up = Vec3::new(0.0, 1.0, 0.0);
+    let dist_to_focus = (look_from - look_at).length();
+    let aperture = 2.0;
+    let camera = Camera::new(&look_from,
+                            &look_at,
+                            &up,
+                            20.0, ASPECT_RATIO, aperture, dist_to_focus);
 
     // Render
     let mut out = io::stdout();
