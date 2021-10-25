@@ -19,7 +19,7 @@ impl Camera {
         let u = up.cross(w).unit_vector();
         let v = w.cross(u);
 
-        let origin = Point3::default();
+        let origin = *look_from;
         let horizontal = u * viewport_width;
         let vertical = v * viewport_height;
         let lower_left_corner = origin - horizontal * 0.5 - vertical * 0.5 - w;
