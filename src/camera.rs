@@ -14,6 +14,7 @@ pub struct Camera {
     _w: Vec3,
 }
 
+#[allow(dead_code)]
 impl Camera {
     pub fn new(look_from: &Point3, look_at: &Point3, up: &Vec3, 
                 fov: f64, aspect_ratio: f64, aperture: f64, focus_dist: f64) -> Self {

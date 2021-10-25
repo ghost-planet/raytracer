@@ -13,6 +13,7 @@ pub struct Lambertian {
     albedo: Color,
 }
 
+#[allow(dead_code)]
 impl Lambertian {
     pub fn new(albedo: &Color) -> Self {
         Self {
@@ -37,6 +38,7 @@ pub struct Metal {
     fuzz: f64,
 }
 
+#[allow(dead_code)]
 impl Metal {
     pub fn new(albedo: &Color, fuzz: f64) -> Self {
         Self {
@@ -62,6 +64,7 @@ pub struct Dielectric {
     index_of_refraction: f64,
 }
 
+#[allow(dead_code)]
 impl Dielectric {
     pub fn new(index_of_refraction: f64) -> Self {
         Self {

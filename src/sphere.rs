@@ -11,6 +11,7 @@ pub struct Sphere {
     material: Rc<dyn Material>,
 }
 
+#[allow(dead_code)]
 impl Sphere {
     pub fn new(center: &Point3, radius: f64, material: Rc<dyn Material>) -> Self {
         Self {
