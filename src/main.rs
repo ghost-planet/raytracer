@@ -8,7 +8,7 @@ mod material;
 use rand::{self,Rng};
 use std::rc::Rc;
 use std::io::{self, Stdout, Write};
-use vec3::{Point3, Color};
+use vec3::{Point3, Color, Vec3};
 use ray::Ray;
 use hittable::{Hittable, HittableList};
 use sphere::Sphere;
@@ -36,7 +36,10 @@ fn main() {
     world.add(Rc::new(Sphere::new(&Point3::new( 1.0,    0.0, -1.0),   0.5, material_right)));
 
     // Camera
-    let camera = Camera::new(ASPECT_RATIO);
+    let camera = Camera::new(&Point3::default(),
+                            &Point3::new(0.0, 0.0, -1.0),
+                            &Vec3::new(0.0, 1.0, 0.0),
+                            90.0, ASPECT_RATIO);
 
     // Render
     let mut out = io::stdout();
