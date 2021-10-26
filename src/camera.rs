@@ -12,12 +12,13 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     _w: Vec3,
+    shutter_duration: f64,
 }
 
 #[allow(dead_code)]
 impl Camera {
     pub fn new(look_from: &Point3, look_at: &Point3, up: &Vec3, 
-                fov: f64, aspect_ratio: f64, aperture: f64, focus_dist: f64) -> Self {
+                fov: f64, aspect_ratio: f64, aperture: f64, focus_dist: f64, shutter_duration: f64) -> Self {
         let fov = fov.to_radians() / 2.0;
         let viewport_height: f64 = fov.tan() * 2.0;
         let viewport_width: f64 = viewport_height * aspect_ratio;
@@ -37,15 +38,19 @@ impl Camera {
             horizontal, vertical,
             aperture,
             u, v, _w: w,
+            shutter_duration,
         }
     }
 
     pub fn gen_ray(&self, u: f64, v: f64) -> Ray {
+        let mut rng = rand::thread_rng();
         let offset = random_in_unit_disk() * (self.aperture * 0.5);
         let offset = self.u * offset.x() + self.v * offset.y();
         // (self.lower_left_corner + self.horizontal * u + self.vertical * v) is a point in the focus plane,
         // so if the ray hit a point in focus plane then it will be focus, otherwise it will be defocus
-        Ray::new(&(self.origin + offset), &(self.lower_left_corner + self.horizontal * u + self.vertical * v - self.origin - offset).unit_vector())
+        Ray::new(&(self.origin + offset), 
+                &(self.lower_left_corner + self.horizontal * u + self.vertical * v - self.origin - offset).unit_vector(),
+                rng.gen_range(0.0..self.shutter_duration))
     }
 }
 

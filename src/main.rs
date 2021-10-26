@@ -11,7 +11,7 @@ use rand::{self,Rng};
 use clap::{Arg, App};
 use raytracer::vec3::{Point3, Color, Vec3};
 use raytracer::hittable::HittableList;
-use raytracer::sphere::Sphere;
+use raytracer::sphere::{Sphere, AnimatedSphere};
 use raytracer::camera::Camera;
 use raytracer::material::{Lambertian, Metal, Dielectric};
 
@@ -80,13 +80,14 @@ fn main() {
     // Camera
     const DIST_TO_FOCUS: f64 = 10.0;
     const APERTURE: f64 = 0.1;
+    const SHUTTER_DURATION: f64 = 1.0;
     let look_from = Point3::new(13.0, 2.0, 3.0);
     let look_at = Point3::new(0.0, 0.0, 0.0);
     let up = Vec3::new(0.0, 1.0, 0.0);
     let camera = Camera::new(&look_from,
                             &look_at,
                             &up,
-                            20.0, aspect_ratio, APERTURE, DIST_TO_FOCUS);
+                            20.0, aspect_ratio, APERTURE, DIST_TO_FOCUS, SHUTTER_DURATION);
 
     // Render
     let mut out = File::create(output).unwrap();
@@ -115,7 +116,8 @@ fn random_scene<T: Rng>(rng: &mut T) -> HittableList {
                 // diffuse
                 let albedo = Color::random() * Color::random();
                 let sphere_material = Rc::new(Lambertian::new(&albedo));
-                world.add(Rc::new(Sphere::new(&center, 0.2, sphere_material)));
+                let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
+                world.add(Rc::new(AnimatedSphere::new(&center, &center1, 1.0, 0.2, sphere_material)));
             } else if choose_mat < 0.95 {
                 // metal
                 let albedo = Color::random_in(0.5, 1.0);
