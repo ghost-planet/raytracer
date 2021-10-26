@@ -1,9 +1,10 @@
 use std::rc::Rc;
 
-use super::vec3::Point3;
+use super::vec3::{Point3, Vec3};
 use super::ray::Ray;
 use super::hittable::{Hittable, HitRecord};
 use super::material::Material;
+use super::bbox::AABB;
 
 pub struct Sphere {
     center: Point3,
@@ -45,6 +46,11 @@ impl Hittable for Sphere {
         let p = ray.at(root);
         let n = (p - self.center) / self.radius;
         Some(HitRecord::new(ray, root, &p, &n, self.material.clone()))
+    }
+
+    fn bounding_box(&self) -> Option<AABB> {
+        let r = Vec3::new(self.radius, self.radius, self.radius);
+        Some(AABB::new(&(self.center - r), &(self.center + r)))
     }
 }
 
@@ -100,5 +106,12 @@ impl Hittable for AnimatedSphere {
         let p = ray.at(root);
         let n = (p - cur_center) / self.radius;
         Some(HitRecord::new(ray, root, &p, &n, self.material.clone()))
+    }
+
+    fn bounding_box(&self) -> Option<AABB> {
+        let r = Vec3::new(self.radius, self.radius, self.radius);
+        let mut aabb = AABB::new(&(self.center0 - r), &(self.center0 + r));
+        aabb.merge(&AABB::new(&(self.center1 - r), &(self.center1 + r)));
+        Some(aabb)
     }
 }

@@ -1,10 +1,3 @@
-mod vec3;
-mod ray;
-mod hittable;
-mod sphere;
-mod camera;
-mod material;
-
 use std::fs::File;
 use std::rc::Rc;
 use rand::{self,Rng};

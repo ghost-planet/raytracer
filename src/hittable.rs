@@ -3,9 +3,13 @@ use std::rc::Rc;
 use super::ray::Ray;
 use super::vec3::{Point3, Vec3};
 use super::material::Material;
+use super::bbox::AABB;
 
 pub trait Hittable {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+    fn bounding_box(&self) -> Option<AABB> {
+        None
+    }
 }
 
 pub struct HitRecord {
@@ -65,5 +69,19 @@ impl Hittable for HittableList {
         }
 
         record
+    }
+
+    fn bounding_box(&self) -> Option<AABB> {
+        let mut aabb = AABB::default();
+
+        for o in self.objects.iter() {
+            if let Some(ref r) = o.bounding_box() {
+                aabb.merge(r);
+            } else {
+                return None;
+            }
+        }
+
+        Some(aabb)
     }
 }
