@@ -6,6 +6,7 @@ pub mod camera;
 pub mod material;
 
 use rand::{self,Rng};
+use pbr::ProgressBar;
 use std::io::{self, Write};
 
 use vec3::Color;
@@ -18,6 +19,8 @@ pub fn render<T: Hittable, W: Write>(world: &T, camera: &Camera, out: &mut W,
                             samplers_per_pixel: usize, max_depth: usize) {
 
     // Render
+    let mut pb = ProgressBar::new((image_width * image_height) as u64);
+    pb.message("Rendering ");
     // Image width height
     out.write_fmt(format_args!("P3 {} {}\n", image_width, image_height)).unwrap();
     // 255 for max color
@@ -38,8 +41,10 @@ pub fn render<T: Hittable, W: Write>(world: &T, camera: &Camera, out: &mut W,
                 color += ray_color(&ray, world, max_depth);
             }
             write_color(out, &color, samplers_per_pixel).unwrap();
+            pb.inc();
         }
     }
+    pb.finish();
 }
 
 fn write_color<W: Write>(out: &mut W, color: &Color, samplers_per_pixel: usize) -> io::Result<()> {
