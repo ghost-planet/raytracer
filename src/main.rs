@@ -5,9 +5,10 @@ mod sphere;
 mod camera;
 mod material;
 
+use std::fs::File;
 use std::rc::Rc;
-use std::io;
 use rand::{self,Rng};
+use clap::{Arg, App};
 use raytracer::vec3::{Point3, Color, Vec3};
 use raytracer::hittable::HittableList;
 use raytracer::sphere::Sphere;
@@ -15,12 +16,62 @@ use raytracer::camera::Camera;
 use raytracer::material::{Lambertian, Metal, Dielectric};
 
 fn main() {
+    let is_number = |v: String| {
+        match v.parse::<usize>() {
+            Ok(_) => Ok(()),
+            Err(_) => Err(String::from("The value cannot convert to usize"))
+        }
+    };
+
+    let matches = App::new("My Super Program")
+                            .version("1.0")
+                            .author("Kevin K. <kbknapp@gmail.com>")
+                            .about("Does awesome things")
+                            .arg(Arg::with_name("WIDTH")
+                                .short("w")
+                                .long("width")
+                                .value_name("WIDTH")
+                                .help("Sets output file width")
+                                .takes_value(true)
+                                .required(true)
+                                .validator(is_number))
+                            .arg(Arg::with_name("HEIGHT")
+                                .short("h")
+                                .long("height")
+                                .value_name("HEIGHT")
+                                .help("Sets output file height")
+                                .takes_value(true)
+                                .required(true)
+                                .validator(is_number))
+                            .arg(Arg::with_name("SAMPLERS")
+                                .short("s")
+                                .long("samplers")
+                                .value_name("SAMPLERS")
+                                .help("Sets samplers per pixel, default is 500")
+                                .takes_value(true)
+                                .validator(is_number))
+                            .arg(Arg::with_name("DEPTH")
+                                .short("d")
+                                .long("depth")
+                                .value_name("DEPTH")
+                                .help("Sets max ray trace depth, default is 50")
+                                .takes_value(true)
+                                .validator(is_number))
+                            .arg(Arg::with_name("OUTPUT")
+                                .help("Sets the output file to use")
+                                .required(true)
+                                .index(1))
+                            .get_matches();
+
     // Image
-    const ASPECT_RATIO: f64 = 3.0 / 2.0;
-    const IAMGE_WIDTH: usize = 1200;
-    const IMAGE_HEIGHT: usize = (IAMGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLERS_PER_PIXEL: usize = 500;
-    const MAX_DEPTH: usize = 50;
+    let output = matches.value_of("OUTPUT").unwrap();
+
+    let image_width = matches.value_of("WIDTH").unwrap().parse::<usize>().unwrap();
+    let image_height = matches.value_of("HEIGHT").unwrap().parse::<usize>().unwrap();
+    let aspect_ratio = image_width as f64 / image_height as f64;
+
+    let samplers_per_pixel = matches.value_of("SAMPLERS").unwrap_or("500").parse::<usize>().unwrap();
+    let max_depth = matches.value_of("DEPTH").unwrap_or("50").parse::<usize>().unwrap();
 
     // World
     let mut rng = rand::thread_rng();
@@ -35,13 +86,13 @@ fn main() {
     let camera = Camera::new(&look_from,
                             &look_at,
                             &up,
-                            20.0, ASPECT_RATIO, APERTURE, DIST_TO_FOCUS);
+                            20.0, aspect_ratio, APERTURE, DIST_TO_FOCUS);
 
     // Render
-    let mut out = io::stdout();
+    let mut out = File::create(output).unwrap();
     raytracer::render(&world, &camera, &mut out, 
-                    IAMGE_WIDTH, IMAGE_HEIGHT,
-                    SAMPLERS_PER_PIXEL, MAX_DEPTH);
+                    image_width, image_height,
+                    samplers_per_pixel, max_depth);
 }
 
 fn random_scene<T: Rng>(rng: &mut T) -> HittableList {
