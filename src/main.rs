@@ -24,9 +24,9 @@ fn main() {
     };
 
     let matches = App::new("My Super Program")
-                            .version("1.0")
-                            .author("Kevin K. <kbknapp@gmail.com>")
-                            .about("Does awesome things")
+                            .version("0.1.0")
+                            .author("VincentGong. <return0xffff@gmail.com>")
+                            .about("A simple ray tracer")
                             .arg(Arg::with_name("WIDTH")
                                 .short("w")
                                 .long("width")
