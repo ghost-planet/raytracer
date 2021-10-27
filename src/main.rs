@@ -7,7 +7,7 @@ use raytracer::hittable::{Hittable, BVH};
 use raytracer::sphere::{Sphere, AnimatedSphere};
 use raytracer::camera::Camera;
 use raytracer::material::{Lambertian, Metal, Dielectric};
-use raytracer::texture::{SolidTexture, CheckerTexture};
+use raytracer::texture::{SolidTexture, CheckerTexture, ImageTexture};
 
 fn main() {
     let is_number = |v: String| {
@@ -51,6 +51,11 @@ fn main() {
                                 .help("Sets max ray trace depth, default is 50")
                                 .takes_value(true)
                                 .validator(is_number))
+                            .arg(Arg::with_name("SCENE")
+                                .long("scene")
+                                .value_name("SCENE")
+                                .help("Scene to render (earch or random), default is random")
+                                .takes_value(true))
                             .arg(Arg::with_name("OUTPUT")
                                 .help("Sets the output file to use")
                                 .required(true)
@@ -67,21 +72,14 @@ fn main() {
     let samplers_per_pixel = matches.value_of("SAMPLERS").unwrap_or("500").parse::<usize>().unwrap();
     let max_depth = matches.value_of("DEPTH").unwrap_or("50").parse::<usize>().unwrap();
 
-    // World
+    let scene = matches.value_of("SCENE").unwrap_or("random");
+    
+    // World and Camera
     let mut rng = rand::thread_rng();
-    let world = random_scene(&mut rng);
-
-    // Camera
-    const DIST_TO_FOCUS: f64 = 10.0;
-    const APERTURE: f64 = 0.1;
-    const SHUTTER_DURATION: f64 = 1.0;
-    let look_from = Point3::new(13.0, 2.0, 3.0);
-    let look_at = Point3::new(0.0, 0.0, 0.0);
-    let up = Vec3::new(0.0, 1.0, 0.0);
-    let camera = Camera::new(&look_from,
-                            &look_at,
-                            &up,
-                            20.0, aspect_ratio, APERTURE, DIST_TO_FOCUS, SHUTTER_DURATION);
+    let (world, camera) = match scene {
+        "earch" => earch_scene(&mut rng, aspect_ratio),
+        _ => random_scene(&mut rng, aspect_ratio),
+    };
 
     // Render
     let mut out = File::create(output).unwrap();
@@ -90,7 +88,8 @@ fn main() {
                     samplers_per_pixel, max_depth);
 }
 
-fn random_scene<T: Rng>(rng: &mut T) -> BVH {
+fn random_scene<T: Rng>(rng: &mut T, aspect_ratio: f64) -> (BVH, Camera) {
+    // World
     let mut world = Vec::<Rc<dyn Hittable>>::new();
 
     let odd = Rc::new(SolidTexture::new(&Color::new(0.2, 0.3, 0.1)));
@@ -137,5 +136,42 @@ fn random_scene<T: Rng>(rng: &mut T) -> BVH {
     let material = Rc::new(Metal::new(Rc::new(SolidTexture::new(&Color::new(0.7, 0.6, 0.5))), 0.0));
     world.push(Rc::new(Sphere::new(&Point3::new(4.0, 1.0, 0.0), 1.0, material)));
 
-    BVH::new(world)
+    let world = BVH::new(world);
+
+    // Camera 
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const APERTURE: f64 = 0.1;
+    const SHUTTER_DURATION: f64 = 1.0;
+    let look_from = Point3::new(13.0, 2.0, 3.0);
+    let look_at = Point3::new(0.0, 0.0, 0.0);
+    let up = Vec3::new(0.0, 1.0, 0.0);
+    let camera = Camera::new(&look_from,
+                            &look_at,
+                            &up,
+                            20.0, aspect_ratio, APERTURE, DIST_TO_FOCUS, SHUTTER_DURATION);
+    
+    (world, camera)
+}
+
+fn earch_scene<T: Rng>(_rng: &mut T, aspect_ratio: f64) -> (BVH, Camera) {
+    // World
+    let mut world = Vec::<Rc<dyn Hittable>>::new();
+    let texture = Rc::new(ImageTexture::new("assets/earthmap.jpg"));
+    let material = Rc::new(Lambertian::new(texture));
+    world.push(Rc::new(Sphere::new(&Point3::new(0.0, 0.0, 0.0), 2.0, material)));
+    let world = BVH::new(world);
+
+    // Camera 
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const APERTURE: f64 = 0.1;
+    const SHUTTER_DURATION: f64 = 1.0;
+    let look_from = Point3::new(13.0, 2.0, 3.0);
+    let look_at = Point3::new(0.0, 0.0, 0.0);
+    let up = Vec3::new(0.0, 1.0, 0.0);
+    let camera = Camera::new(&look_from,
+                            &look_at,
+                            &up,
+                            20.0, aspect_ratio, APERTURE, DIST_TO_FOCUS, SHUTTER_DURATION);
+
+    (world, camera)
 }

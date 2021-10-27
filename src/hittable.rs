@@ -98,8 +98,6 @@ pub struct BVH {
 
 impl BVH {
     pub fn new(mut objects: Vec<Rc<dyn Hittable>>) -> Self {
-        assert!(objects.len() > 1);
-
         let mut rng = rand::thread_rng();
         BVH::build_bvh(&mut rng, &mut objects[..])
     }
