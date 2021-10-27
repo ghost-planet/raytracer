@@ -7,7 +7,7 @@ use raytracer::hittable::{Hittable, BVH};
 use raytracer::sphere::{Sphere, AnimatedSphere};
 use raytracer::camera::Camera;
 use raytracer::material::{Lambertian, Metal, Dielectric};
-use raytracer::texture::SolidTexture;
+use raytracer::texture::{SolidTexture, CheckerTexture};
 
 fn main() {
     let is_number = |v: String| {
@@ -93,7 +93,9 @@ fn main() {
 fn random_scene<T: Rng>(rng: &mut T) -> BVH {
     let mut world = Vec::<Rc<dyn Hittable>>::new();
 
-    let ground_material = Rc::new(Lambertian::new(Rc::new(SolidTexture::new(&Color::new(0.5, 0.5, 0.5)))));
+    let odd = Rc::new(SolidTexture::new(&Color::new(0.2, 0.3, 0.1)));
+    let even = Rc::new(SolidTexture::new(&Color::new(0.9, 0.9, 0.9)));
+    let ground_material = Rc::new(Lambertian::new(Rc::new(CheckerTexture::new(odd, even))));
     world.push(Rc::new(Sphere::new(&Point3::new(0.0, -1000.0, 0.0), 1000.0, ground_material)));
 
     for a in -11..11 {
