@@ -1,4 +1,5 @@
 
+use rand::{self,Rng};
 use std::rc::Rc;
 use super::ray::Ray;
 use super::vec3::{Point3, Vec3};
@@ -83,5 +84,82 @@ impl Hittable for HittableList {
         }
 
         Some(aabb)
+    }
+}
+
+pub struct BVH {
+    left: Rc<dyn Hittable>,
+    right: Rc<dyn Hittable>,
+    bounding_box: AABB,
+}
+
+impl BVH {
+    pub fn new(mut objects: Vec<Rc<dyn Hittable>>) -> Self {
+        assert!(objects.len() > 1);
+
+        let mut rng = rand::thread_rng();
+        BVH::build_bvh(&mut rng, &mut objects[..])
+    }
+
+    fn build_bvh<R: Rng>(rng: &mut R, objects: &mut [Rc<dyn Hittable>]) -> Self {
+        let comparator = |axis| {
+            move |a: &Rc<dyn Hittable>, b: &Rc<dyn Hittable>| {
+                a.bounding_box().unwrap().min()[axis].partial_cmp(&b.bounding_box().unwrap().min()[axis]).unwrap()
+            }
+        };
+
+        let comparators = [
+            comparator(0),
+            comparator(1),
+            comparator(2),
+        ];
+        objects.sort_by(comparators[rng.gen_range(0..3)]);
+
+        let len = objects.len();
+        if len == 1 {
+            return Self {
+                left: objects[0].clone(),
+                right: objects[0].clone(),
+                bounding_box: objects[0].bounding_box().unwrap(),
+            };
+        } 
+        
+        let (left, right): (Rc<dyn Hittable>, Rc<dyn Hittable>) = 
+            if len == 2 {
+                (objects[0].clone(), objects[1].clone())
+            } else {
+                let mid = len / 2;
+                let left = Rc::new(BVH::build_bvh(rng, &mut objects[0..mid]));
+                let right = Rc::new(BVH::build_bvh(rng, &mut objects[mid..]));
+                (left, right)
+            };
+        
+        let mut bbox = left.bounding_box().unwrap();
+        bbox.merge(&right.bounding_box().unwrap());
+        Self {
+            left, right,
+            bounding_box: bbox,
+        }
+    }
+}
+
+impl Hittable for BVH {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        if !self.bounding_box.hit(ray, t_min, t_max) {
+            return None;
+        }
+
+        if let Some(left) = self.left.hit(ray, t_min, t_max) {
+            match self.right.hit(ray, t_min, left.t) {
+                Some(r) => Some(r),
+                None => Some(left),
+            }
+        } else {
+            self.right.hit(ray, t_min, t_max)
+        }
+    }
+
+    fn bounding_box(&self) -> Option<AABB> {
+        Some(self.bounding_box)
     }
 }
