@@ -6,7 +6,7 @@ use raytracer::vec3::{Point3, Color, Vec3};
 use raytracer::hittable::{Hittable, BVH};
 use raytracer::sphere::{Sphere, AnimatedSphere};
 use raytracer::camera::Camera;
-use raytracer::material::{Lambertian, Metal, Dielectric};
+use raytracer::material::{Lambertian, Metal, Dielectric, DiffuseLight};
 use raytracer::texture::{SolidTexture, CheckerTexture, ImageTexture};
 
 fn main() {
@@ -156,9 +156,14 @@ fn random_scene<T: Rng>(rng: &mut T, aspect_ratio: f64) -> (BVH, Camera) {
 fn earch_scene<T: Rng>(_rng: &mut T, aspect_ratio: f64) -> (BVH, Camera) {
     // World
     let mut world = Vec::<Rc<dyn Hittable>>::new();
+
     let texture = Rc::new(ImageTexture::new("assets/earthmap.jpg"));
     let material = Rc::new(Lambertian::new(texture));
     world.push(Rc::new(Sphere::new(&Point3::new(0.0, 0.0, 0.0), 2.0, material)));
+
+    let texture = Rc::new(SolidTexture::new(&Color::new(4.0, 4.0, 4.0)));
+    let material = Rc::new(DiffuseLight::new(texture));
+    world.push(Rc::new(Sphere::new(&Point3::new(0.0, 0.0, 3.5), 1.0, material)));
     let world = BVH::new(world);
 
     // Camera 

@@ -19,8 +19,9 @@ use camera::Camera;
 pub fn render<T: Hittable, W: Write>(world: &T, camera: &Camera, out: &mut W,
                             image_width: usize, image_height: usize, 
                             samplers_per_pixel: usize, max_depth: usize) {
-
     // Render
+    let background_color = Color::default();
+
     let mut pb = ProgressBar::new((image_width * image_height) as u64);
     pb.message("Rendering ");
     // Image width height
@@ -40,7 +41,7 @@ pub fn render<T: Hittable, W: Write>(world: &T, camera: &Camera, out: &mut W,
                 let u = (i + rng.gen_range(0.0..1.0)) * width_factor;
                 let v = (j + rng.gen_range(0.0..1.0)) * height_factor;
                 let ray = camera.gen_ray(u, v);
-                color += ray_color(&ray, world, max_depth);
+                color += ray_color(&ray, &background_color, world, max_depth);
             }
             write_color(out, &color, samplers_per_pixel).unwrap();
             pb.inc();
@@ -58,22 +59,21 @@ fn write_color<W: Write>(out: &mut W, color: &Color, samplers_per_pixel: usize) 
     out.write_fmt(format_args!("{} {} {}\n", r, g, b))
 }
 
-fn ray_color<T: Hittable>(ray: &Ray, hittable: &T, depth: usize) -> Color {
+fn ray_color<T: Hittable>(ray: &Ray, background_color: &Color, hittable: &T, depth: usize) -> Color {
     if depth == 0 {
         return Color::default();
     }
 
     if let Some(r) = hittable.hit(ray, 0.0001, std::f64::MAX) {
+        let emit = r.material.emitted(r.u, r.v, &r.p);
         if let Some((attenuation, ray)) = r.material.scatter(ray, &r) {
-            return ray_color(&ray, hittable, depth - 1) * attenuation;
+            emit + ray_color(&ray, background_color, hittable, depth - 1) * attenuation
         } else {
-            return Color::new(0.0, 0.0, 0.0);
+            emit
         }
+    } else {
+        *background_color
     }
-
-    let dir = ray.dir().unit_vector();
-    let t = (dir.y() + 1.0) * 0.5;
-    Color::new(1.0, 1.0, 1.0) * (1.0 - t) + Color::new(0.5, 0.7, 1.0) * t
 }
 
 fn clamp(v: f64, min: f64, max: f64) -> f64 {

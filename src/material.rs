@@ -1,14 +1,21 @@
 use rand::{self,Rng};
 use std::rc::Rc;
 
-use super::vec3::{Vec3, Color};
+use super::vec3::{Vec3, Color, Point3};
 use super::ray::Ray;
 use super::hittable::HitRecord;
 use super::texture::Texture;
 
 pub trait Material {
     // return attenuation and scattered ray
-    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<(Color, Ray)>;
+    fn scatter(&self, _ray: &Ray, _rec: &HitRecord) -> Option<(Color, Ray)> {
+        None
+    }
+
+    fn emitted(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
+        // Black
+        Color::default()
+    }
 }
 
 pub struct Lambertian {
@@ -89,6 +96,25 @@ impl Material for Dielectric {
         };
 
         Some((Color::new(1.0, 1.0, 1.0), Ray::new(&rec.p, &scatter_direction, ray.t())))
+    }
+}
+
+pub struct DiffuseLight {
+    emit: Rc<dyn Texture>,
+}
+
+#[allow(dead_code)]
+impl DiffuseLight {
+    pub fn new(emit: Rc<dyn Texture>) -> Self {
+        Self {
+            emit
+        }
+    }
+}
+
+impl Material for DiffuseLight {
+    fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
+        self.emit.value(u, v, p)
     }
 }
 
