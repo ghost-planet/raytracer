@@ -1,8 +1,10 @@
 use rand::{self,Rng};
+use std::rc::Rc;
 
 use super::vec3::{Vec3, Color};
 use super::ray::Ray;
 use super::hittable::HitRecord;
+use super::texture::Texture;
 
 pub trait Material {
     // return attenuation and scattered ray
@@ -10,14 +12,14 @@ pub trait Material {
 }
 
 pub struct Lambertian {
-    albedo: Color,
+    albedo: Rc<dyn Texture>,
 }
 
 #[allow(dead_code)]
 impl Lambertian {
-    pub fn new(albedo: &Color) -> Self {
+    pub fn new(albedo: Rc<dyn Texture>) -> Self {
         Self {
-            albedo: *albedo,
+            albedo
         }
     }
 }
@@ -25,24 +27,25 @@ impl Lambertian {
 impl Material for Lambertian {
     fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
         let scatter_direction = rec.normal + random_unit_vector();
+        let attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
         if scatter_direction.near_zero() {
-            Some((self.albedo, Ray::new(&rec.p, &rec.normal, ray.t())))
+            Some((attenuation, Ray::new(&rec.p, &rec.normal, ray.t())))
         } else {
-            Some((self.albedo, Ray::new(&rec.p, &scatter_direction.unit_vector(), ray.t())))
+            Some((attenuation, Ray::new(&rec.p, &scatter_direction.unit_vector(), ray.t())))
         }   
     }
 }
 
 pub struct Metal {
-    albedo: Color,
+    albedo: Rc<dyn Texture>,
     fuzz: f64,
 }
 
 #[allow(dead_code)]
 impl Metal {
-    pub fn new(albedo: &Color, fuzz: f64) -> Self {
+    pub fn new(albedo: Rc<dyn Texture>, fuzz: f64) -> Self {
         Self {
-            albedo: *albedo,
+            albedo,
             fuzz: if fuzz < 1.0 {fuzz} else {1.0},
         }
     }
@@ -53,7 +56,8 @@ impl Material for Metal {
         let reflected_direction = reflect(&ray.dir(), &rec.normal);
         let scatter = (reflected_direction + random_in_unit_sphere() * self.fuzz).unit_vector();
         if scatter.dot(rec.normal) > 0.0 {
-            Some((self.albedo, Ray::new(&rec.p, &scatter, ray.t())))
+            let attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
+            Some((attenuation, Ray::new(&rec.p, &scatter, ray.t())))
         } else {
             None
         }

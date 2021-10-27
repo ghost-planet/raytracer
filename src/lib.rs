@@ -5,6 +5,7 @@ pub mod sphere;
 pub mod camera;
 pub mod material;
 pub mod bbox;
+pub mod texture;
 
 use rand::{self,Rng};
 use pbr::ProgressBar;

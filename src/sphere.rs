@@ -21,6 +21,16 @@ impl Sphere {
             material,
         }
     }
+
+    pub fn uv(&self, p: &Point3) -> (f64, f64) {
+        use std::f64::consts::PI;
+        use std::f64::consts::FRAC_1_PI;
+
+        let theta = (-p.y()).acos();
+        let phi = (-p.z()).atan2(p.x()) + PI;
+
+        (phi * 0.5 * FRAC_1_PI, theta * FRAC_1_PI)
+    }
 }
 
 impl Hittable for Sphere {
@@ -45,7 +55,8 @@ impl Hittable for Sphere {
         
         let p = ray.at(root);
         let n = (p - self.center) / self.radius;
-        Some(HitRecord::new(ray, root, &p, &n, self.material.clone()))
+        let (u, v) = self.uv(&p);
+        Some(HitRecord::new(ray, root, &p, &n, self.material.clone(), u, v))
     }
 
     fn bounding_box(&self) -> Option<AABB> {
@@ -79,6 +90,16 @@ impl AnimatedSphere {
         let f = t / self.duration;
         self.center0 * (1.0 - f) + self.center1 * f
     }
+
+    pub fn uv(&self, p: &Point3) -> (f64, f64) {
+        use std::f64::consts::PI;
+        use std::f64::consts::FRAC_1_PI;
+
+        let theta = (-p.y()).acos();
+        let phi = (-p.z()).atan2(p.x()) + PI;
+
+        (phi * 0.5 * FRAC_1_PI, theta * FRAC_1_PI)
+    }
 }
 
 impl Hittable for AnimatedSphere {
@@ -105,7 +126,8 @@ impl Hittable for AnimatedSphere {
         
         let p = ray.at(root);
         let n = (p - cur_center) / self.radius;
-        Some(HitRecord::new(ray, root, &p, &n, self.material.clone()))
+        let (u, v) = self.uv(&p);
+        Some(HitRecord::new(ray, root, &p, &n, self.material.clone(), u, v))
     }
 
     fn bounding_box(&self) -> Option<AABB> {
