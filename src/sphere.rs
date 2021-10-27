@@ -55,7 +55,7 @@ impl Hittable for Sphere {
         
         let p = ray.at(root);
         let n = (p - self.center) / self.radius;
-        let (u, v) = self.uv(&p);
+        let (u, v) = self.uv(&n);
         Some(HitRecord::new(ray, root, &p, &n, self.material.clone(), u, v))
     }
 
@@ -126,7 +126,7 @@ impl Hittable for AnimatedSphere {
         
         let p = ray.at(root);
         let n = (p - cur_center) / self.radius;
-        let (u, v) = self.uv(&p);
+        let (u, v) = self.uv(&n);
         Some(HitRecord::new(ray, root, &p, &n, self.material.clone(), u, v))
     }
 
