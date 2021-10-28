@@ -8,6 +8,7 @@ use raytracer::sphere::{Sphere, AnimatedSphere};
 use raytracer::camera::Camera;
 use raytracer::material::{Lambertian, Metal, Dielectric, DiffuseLight};
 use raytracer::texture::{SolidTexture, CheckerTexture, ImageTexture};
+use raytracer::rect::AARect;
 
 fn main() {
     let is_number = |v: String| {
@@ -54,7 +55,7 @@ fn main() {
                             .arg(Arg::with_name("SCENE")
                                 .long("scene")
                                 .value_name("SCENE")
-                                .help("Scene to render (earch or random), default is random")
+                                .help("Scene to render (earch | random | light | cornell_box), default is random")
                                 .takes_value(true))
                             .arg(Arg::with_name("OUTPUT")
                                 .help("Sets the output file to use")
@@ -78,6 +79,8 @@ fn main() {
     let mut rng = rand::thread_rng();
     let (world, camera) = match scene {
         "earch" => earch_scene(&mut rng, aspect_ratio),
+        "light" => light_scene(&mut rng, aspect_ratio),
+        "cornell_box" => cornell_box_scene(&mut rng, aspect_ratio),
         _ => random_scene(&mut rng, aspect_ratio),
     };
 
@@ -180,3 +183,69 @@ fn earch_scene<T: Rng>(_rng: &mut T, aspect_ratio: f64) -> (BVH, Camera) {
 
     (world, camera)
 }
+
+fn light_scene<T: Rng>(_rng: &mut T, aspect_ratio: f64) -> (BVH, Camera) {
+    let mut world = Vec::<Rc<dyn Hittable>>::new();
+
+    let texture = Rc::new(SolidTexture::new(&Color::new(0.0, 1.0, 0.0)));
+    let material = Rc::new(Lambertian::new(texture));
+    world.push(Rc::new(Sphere::new(&Point3::new(0.0, -1000.0, 0.0), 1000.0, material)));
+    let texture = Rc::new(SolidTexture::new(&Color::new(1.0, 0.0, 0.0)));
+    let material = Rc::new(Lambertian::new(texture));
+    world.push(Rc::new(Sphere::new(&Point3::new(0.0, 2.0, 0.0), 2.0, material)));
+
+    let texture = Rc::new(SolidTexture::new(&Color::new(4.0, 4.0, 4.0)));
+    let material = Rc::new(DiffuseLight::new(texture));
+    world.push(Rc::new(AARect::new_xy(3.0, 5.0, 1.0, 3.0, -2.0, material)));
+    let world = BVH::new(world);
+
+    // Camera 
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const APERTURE: f64 = 0.1;
+    const SHUTTER_DURATION: f64 = 1.0;
+    let look_from = Point3::new(26.0, 3.0, 6.0);
+    let look_at = Point3::new(0.0, 2.0, 0.0);
+    let up = Vec3::new(0.0, 1.0, 0.0);
+    let camera = Camera::new(&look_from,
+                            &look_at,
+                            &up,
+                            20.0, aspect_ratio, APERTURE, DIST_TO_FOCUS, SHUTTER_DURATION);
+
+    (world, camera)
+}
+
+fn cornell_box_scene<T: Rng>(_rng: &mut T, aspect_ratio: f64) -> (BVH, Camera) {
+    let mut world = Vec::<Rc<dyn Hittable>>::new();
+
+    let texture = Rc::new(SolidTexture::new(&Color::new(0.65, 0.05, 0.05)));
+    let red = Rc::new(Lambertian::new(texture));
+    let texture = Rc::new(SolidTexture::new(&Color::new(0.73, 0.73, 0.73)));
+    let white = Rc::new(Lambertian::new(texture));
+    let texture = Rc::new(SolidTexture::new(&Color::new(0.12, 0.45, 0.15)));
+    let green = Rc::new(Lambertian::new(texture));
+    let texture = Rc::new(SolidTexture::new(&Color::new(15.0, 15.0, 15.0)));
+    let light = Rc::new(DiffuseLight::new(texture));
+
+    world.push(Rc::new(AARect::new_yz(0.0, 555.0, 0.0, 555.0, 555.0, green.clone())));
+    world.push(Rc::new(AARect::new_yz(0.0, 555.0, 0.0, 555.0, 0.0, red.clone())));
+    world.push(Rc::new(AARect::new_xz(213.0, 343.0, 227.0, 332.0, 554.0, light)));
+    world.push(Rc::new(AARect::new_xz(0.0, 555.0, 0.0, 555.0, 0.0, white.clone())));
+    world.push(Rc::new(AARect::new_xz(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+    world.push(Rc::new(AARect::new_xy(0.0, 555.0, 0.0, 555.0, 555.0, white)));
+
+    let world = BVH::new(world);
+
+    // Camera 
+    const DIST_TO_FOCUS: f64 = 10.0;
+    const APERTURE: f64 = 0.1;
+    const SHUTTER_DURATION: f64 = 1.0;
+    let look_from = Point3::new(278.0, 278.0, -800.0);
+    let look_at = Point3::new(278.0, 278.0, 0.0);
+    let up = Vec3::new(0.0, 1.0, 0.0);
+    let camera = Camera::new(&look_from,
+                            &look_at,
+                            &up,
+                            40.0, aspect_ratio, APERTURE, DIST_TO_FOCUS, SHUTTER_DURATION);
+
+    (world, camera)
+} 
