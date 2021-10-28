@@ -9,6 +9,7 @@ use raytracer::camera::Camera;
 use raytracer::material::{Lambertian, Metal, Dielectric, DiffuseLight};
 use raytracer::texture::{SolidTexture, CheckerTexture, ImageTexture};
 use raytracer::rect::AARect;
+use raytracer::aabox::AABox;
 
 fn main() {
     let is_number = |v: String| {
@@ -226,12 +227,19 @@ fn cornell_box_scene<T: Rng>(_rng: &mut T, aspect_ratio: f64) -> (BVH, Camera) {
     let texture = Rc::new(SolidTexture::new(&Color::new(15.0, 15.0, 15.0)));
     let light = Rc::new(DiffuseLight::new(texture));
 
+    // Walls
     world.push(Rc::new(AARect::new_yz(0.0, 555.0, 0.0, 555.0, 555.0, green.clone())));
     world.push(Rc::new(AARect::new_yz(0.0, 555.0, 0.0, 555.0, 0.0, red.clone())));
-    world.push(Rc::new(AARect::new_xz(213.0, 343.0, 227.0, 332.0, 554.0, light)));
     world.push(Rc::new(AARect::new_xz(0.0, 555.0, 0.0, 555.0, 0.0, white.clone())));
     world.push(Rc::new(AARect::new_xz(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
-    world.push(Rc::new(AARect::new_xy(0.0, 555.0, 0.0, 555.0, 555.0, white)));
+    world.push(Rc::new(AARect::new_xy(0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+
+    // Light
+    world.push(Rc::new(AARect::new_xz(213.0, 343.0, 227.0, 332.0, 554.0, light)));
+
+    // Blocks
+    world.push(Rc::new(AABox::new(&Point3::new(130.0, 0.0, 65.0), &Point3::new(295.0, 165.0, 230.0), white.clone())));
+    world.push(Rc::new(AABox::new(&Point3::new(265.0, 0.0, 295.0), &Point3::new(430.0, 330.0, 460.0), white.clone())));
 
     let world = BVH::new(world);
 
