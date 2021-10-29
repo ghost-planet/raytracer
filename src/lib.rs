@@ -8,6 +8,7 @@ pub mod bbox;
 pub mod texture;
 pub mod rect;
 pub mod aabox;
+pub mod medium;
 
 use rand::{self,Rng};
 use pbr::ProgressBar;
